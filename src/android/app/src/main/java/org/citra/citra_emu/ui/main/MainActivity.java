@@ -155,16 +155,11 @@ public final class MainActivity extends AppCompatActivity implements MainView {
                 case MainPresenter.REQUEST_ADD_DIRECTORY:
                     FileBrowserHelper.openDirectoryPicker(this,
                                                       MainPresenter.REQUEST_ADD_DIRECTORY,
-                                                      R.string.select_game_folder,
-                                                      Arrays.asList("elf", "axf", "cci", "3ds",
-                                                                    "cxi", "app", "3dsx", "cia",
-                                                                    "rar", "zip", "7z", "torrent",
-                                                                    "tar", "gz"));
+                                                      R.string.select_game_folder);
                     break;
                 case MainPresenter.REQUEST_INSTALL_CIA:
                     FileBrowserHelper.openFilePicker(this, MainPresenter.REQUEST_INSTALL_CIA,
-                                                     R.string.install_cia_title,
-                                                     Collections.singletonList("cia"), true);
+                                                     R.string.install_cia_title, true);
                     break;
             }
         } else {
@@ -195,7 +190,12 @@ public final class MainActivity extends AppCompatActivity implements MainView {
                 case MainPresenter.REQUEST_INSTALL_CIA:
                     // If the user picked a file, as opposed to just backing out.
                     if (resultCode == MainActivity.RESULT_OK) {
-                        NativeLibrary.InstallCIAS(FileBrowserHelper.getSelectedFiles(result));
+                        String[] selectedFiles = FileBrowserHelper.getSelectedFiles(result, getApplicationContext(), Collections.singletonList("cia"));
+                        if (selectedFiles == null) {
+                            Toast.makeText(getApplicationContext(), R.string.cia_file_not_found, Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        NativeLibrary.InstallCIAS(selectedFiles);
                         mPresenter.refeshGameList();
                     }
                     break;

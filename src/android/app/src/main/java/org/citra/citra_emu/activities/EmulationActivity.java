@@ -453,8 +453,7 @@ public final class EmulationActivity extends AppCompatActivity {
 
             case MENU_ACTION_LOAD_AMIIBO:
                 FileBrowserHelper.openFilePicker(this, REQUEST_SELECT_AMIIBO,
-                                                 R.string.select_amiibo,
-                                                 Collections.singletonList("bin"), false);
+                                                 R.string.select_amiibo, false);
                 break;
 
             case MENU_ACTION_REMOVE_AMIIBO:
@@ -534,7 +533,7 @@ public final class EmulationActivity extends AppCompatActivity {
             case REQUEST_SELECT_AMIIBO:
                 // If the user picked a file, as opposed to just backing out.
                 if (resultCode == MainActivity.RESULT_OK) {
-                    String[] selectedFiles = FileBrowserHelper.getSelectedFiles(result);
+                    String[] selectedFiles = FileBrowserHelper.getSelectedFiles(result, getApplicationContext(), Collections.singletonList("bin"));
                     if (selectedFiles == null)
                         return;
 
