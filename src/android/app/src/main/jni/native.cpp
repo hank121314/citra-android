@@ -16,6 +16,9 @@
 #include "common/scm_rev.h"
 #include "common/scope_exit.h"
 #include "common/string_util.h"
+#include "common/common_paths.h"
+#include "common/logging/backend.h"
+#include "common/logging/log.h"
 #include "core/core.h"
 #include "core/frontend/applets/default_applets.h"
 #include "core/frontend/camera/factory.h"
@@ -319,7 +322,7 @@ void Java_org_citra_citra_1emu_NativeLibrary_SwapScreens(JNIEnv* env, [[maybe_un
 void Java_org_citra_citra_1emu_NativeLibrary_SetUserDirectory(JNIEnv* env,
                                                               [[maybe_unused]] jclass clazz,
                                                               jstring j_directory) {
-    FileUtil::SetCurrentDir(GetJString(env, j_directory));
+    FileUtil::SetUserPath(GetJString(env, j_directory));
 }
 
 jobjectArray Java_org_citra_citra_1emu_NativeLibrary_GetInstalledGamePaths(
@@ -337,7 +340,7 @@ jobjectArray Java_org_citra_citra_1emu_NativeLibrary_GetInstalledGamePaths(
                     bool executable{};
                     const Loader::ResultStatus result = loader->IsExecutable(executable);
                     if (Loader::ResultStatus::Success == result && executable) {
-                        games.emplace_back(path);
+                        games.emplace_back(FileUtil::ParseContentUri(path));
                     }
                 }
             }
@@ -503,6 +506,14 @@ jstring Java_org_citra_citra_1emu_NativeLibrary_GetGitRevision(JNIEnv* env,
 void Java_org_citra_citra_1emu_NativeLibrary_CreateConfigFile(JNIEnv* env,
                                                               [[maybe_unused]] jclass clazz) {
     Config{};
+}
+
+void Java_org_citra_citra_1emu_NativeLibrary_CreateLogFile(JNIEnv* env,
+jclass clazz) {
+    FileUtil::CreateFullPath(FileUtil::GetUserPath(FileUtil::UserPath::LogDir));
+    Log::AddBackend(std::make_unique<Log::FileBackend>(
+            FileUtil::GetUserPath(FileUtil::UserPath::LogDir) + LOG_FILE));
+    LOG_INFO(Frontend, "Logging backend initialised");
 }
 
 jint Java_org_citra_citra_1emu_NativeLibrary_DefaultCPUCore(JNIEnv* env,

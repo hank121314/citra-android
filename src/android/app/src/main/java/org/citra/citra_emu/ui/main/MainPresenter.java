@@ -9,6 +9,7 @@ import org.citra.citra_emu.features.settings.model.Settings;
 import org.citra.citra_emu.features.settings.utils.SettingsFile;
 import org.citra.citra_emu.model.GameDatabase;
 import org.citra.citra_emu.utils.AddDirectoryHelper;
+import org.citra.citra_emu.utils.UserDirectoryHelper;
 
 public final class MainPresenter {
     public static final int REQUEST_ADD_DIRECTORY = 1;
@@ -25,7 +26,7 @@ public final class MainPresenter {
     public void onCreate() {
         String versionName = BuildConfig.VERSION_NAME;
         mView.setVersionString(versionName);
-        refeshGameList();
+        refreshGameList();
     }
 
     public void launchFileListActivity(int request) {
@@ -44,6 +45,10 @@ public final class MainPresenter {
         switch (itemId) {
             case R.id.menu_settings_core:
                 mView.launchSettingsActivity(SettingsFile.FILE_NAME_CONFIG);
+                return true;
+
+            case R.id.button_select_root:
+                launchFileListActivity(UserDirectoryHelper.REQUEST_CODE_WRITE_PERMISSION);
                 return true;
 
             case R.id.button_add_directory:
@@ -74,9 +79,11 @@ public final class MainPresenter {
         mDirToAdd = dir;
     }
 
-    public void refeshGameList() {
-        GameDatabase databaseHelper = CitraApplication.databaseHelper;
-        databaseHelper.scanLibrary(databaseHelper.getWritableDatabase());
-        mView.refresh();
+    public void refreshGameList() {
+        if (UserDirectoryHelper.hasWriteAccess()) {
+            GameDatabase databaseHelper = CitraApplication.databaseHelper;
+            databaseHelper.scanLibrary(databaseHelper.getWritableDatabase());
+            mView.refresh();
+        }
     }
 }

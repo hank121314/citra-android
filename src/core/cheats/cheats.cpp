@@ -13,6 +13,12 @@
 #include "core/hle/kernel/process.h"
 #include "core/hw/gpu.h"
 
+#ifdef ANDROID
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include "android_storage/android_storage.h"
+#endif
+
 namespace Cheats {
 
 // Luma3DS uses this interval for applying cheats, so to keep consistent behavior
@@ -72,8 +78,13 @@ void CheatEngine::SaveCheatFile() const {
         FileUtil::CreateDir(cheat_dir);
     }
 
+#ifdef ANDROID
+    boost::iostreams::stream<boost::iostreams::file_descriptor_sink> file;
+    OpenFStream<std::ios_base::out, boost::iostreams::stream<boost::iostreams::file_descriptor_sink>>(file, filepath);
+#else
     std::ofstream file;
     OpenFStream(file, filepath, std::ios_base::out);
+#endif
 
     auto cheats = GetCheats();
     for (const auto& cheat : cheats) {

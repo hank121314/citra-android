@@ -344,10 +344,13 @@ add_subdirectory(externals)
 
 # Boost
 if (USE_SYSTEM_BOOST)
-    find_package(Boost 1.70.0 COMPONENTS serialization REQUIRED)
+    find_package(Boost 1.70.0 COMPONENTS serialization iostreams REQUIRED)
 else()
     add_library(Boost::boost ALIAS boost)
     add_library(Boost::serialization ALIAS boost_serialization)
+    if (ANDROID)
+        add_library(Boost::iostreams ALIAS boost_iostreams)
+    endif()
 endif()
 
 add_subdirectory(src)

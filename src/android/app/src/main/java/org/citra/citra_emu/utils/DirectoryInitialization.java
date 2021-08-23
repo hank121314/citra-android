@@ -9,7 +9,7 @@ package org.citra.citra_emu.utils;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Environment;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -46,8 +46,9 @@ public final class DirectoryInitialization {
             return;
 
         if (directoryState != DirectoryInitializationState.CITRA_DIRECTORIES_INITIALIZED) {
-            if (PermissionsHandler.hasWriteAccess(context)) {
+            if (UserDirectoryHelper.hasWriteAccess()) {
                 if (setCitraUserDirectory()) {
+                    NativeLibrary.CreateLogFile();
                     initializeInternalStorage(context);
                     NativeLibrary.CreateConfigFile();
                     directoryState = DirectoryInitializationState.CITRA_DIRECTORIES_INITIALIZED;
@@ -71,6 +72,11 @@ public final class DirectoryInitialization {
         file.delete();
     }
 
+    public static void resetCitraDirecotryState() {
+        isCitraDirectoryInitializationRunning.compareAndSet(true, false);
+        directoryState = null;
+    }
+
     public static boolean areCitraDirectoriesReady() {
         return directoryState == DirectoryInitializationState.CITRA_DIRECTORIES_INITIALIZED;
     }
@@ -88,17 +94,13 @@ public final class DirectoryInitialization {
     private static native void SetSysDirectory(String path);
 
     private static boolean setCitraUserDirectory() {
-        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-            File externalPath = Environment.getExternalStorageDirectory();
-            if (externalPath != null) {
-                userPath = externalPath.getAbsolutePath() + "/citra-emu";
-                Log.debug("[DirectoryInitialization] User Dir: " + userPath);
-                // NativeLibrary.SetUserDirectory(userPath);
-                return true;
-            }
-
+        Uri dataPath = UserDirectoryHelper.getCitraDataDirectory();
+        if (dataPath != null) {
+            userPath = dataPath.toString();
+            Log.debug("[DirectoryInitialization] User Dir: " + userPath);
+            NativeLibrary.SetUserDirectory(userPath);
+            return true;
         }
-
         return false;
     }
 
@@ -178,9 +180,9 @@ public final class DirectoryInitialization {
         }
     }
 
-    public enum DirectoryInitializationState {
-        CITRA_DIRECTORIES_INITIALIZED,
-        EXTERNAL_STORAGE_PERMISSION_NEEDED,
-        CANT_FIND_EXTERNAL_STORAGE
-    }
+public enum DirectoryInitializationState {
+    CITRA_DIRECTORIES_INITIALIZED,
+    EXTERNAL_STORAGE_PERMISSION_NEEDED,
+    CANT_FIND_EXTERNAL_STORAGE
+}
 }

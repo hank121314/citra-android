@@ -2,6 +2,7 @@
 // Licensed under GPLv2 or any later version
 // Refer to the license.txt file included.
 
+#include "android_storage/android_storage.h"
 #include "common/common_paths.h"
 #include "common/logging/backend.h"
 #include "common/logging/filter.h"
@@ -142,11 +143,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     log_filter.ParseFilterString(Settings::values.log_filter);
     Log::SetGlobalFilter(log_filter);
     Log::AddBackend(std::make_unique<Log::LogcatBackend>());
-    FileUtil::CreateFullPath(FileUtil::GetUserPath(FileUtil::UserPath::LogDir));
-    Log::AddBackend(std::make_unique<Log::FileBackend>(
-        FileUtil::GetUserPath(FileUtil::UserPath::LogDir) + LOG_FILE));
-    LOG_INFO(Frontend, "Logging backend initialised");
-
     // Initialize Java classes
     const jclass native_library_class = env->FindClass("org/citra/citra_emu/NativeLibrary");
     s_native_library_class = reinterpret_cast<jclass>(env->NewGlobalRef(native_library_class));
@@ -182,7 +178,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     s_disk_cache_load_progress = env->GetStaticMethodID(
         s_disk_cache_progress_class, "loadProgress",
         "(Lorg/citra/citra_emu/disk_shader_cache/DiskShaderCacheProgress$LoadCallbackStage;II)V");
-
     // Initialize LoadCallbackStage map
     const auto to_java_load_callback_stage = [env](const std::string& stage) {
         jclass load_callback_stage_class = IDCache::GetDiskCacheLoadCallbackStageClass();
@@ -192,6 +187,8 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
                                   "Lorg/citra/citra_emu/disk_shader_cache/"
                                   "DiskShaderCacheProgress$LoadCallbackStage;")));
     };
+    // Initialize Android Storage
+    AndroidStorage::RegisterCallbacks(env, s_native_library_class);
 
     s_java_load_callback_stages.emplace(VideoCore::LoadCallbackStage::Prepare,
                                         to_java_load_callback_stage("Prepare"));
@@ -215,6 +212,8 @@ void JNI_OnUnload(JavaVM* vm, void* reserved) {
         return;
     }
 
+    // UnInitialize Android Storage
+    AndroidStorage::UnRegisterCallbacks();
     env->DeleteGlobalRef(s_native_library_class);
     env->DeleteGlobalRef(s_savestate_info_class);
     env->DeleteGlobalRef(s_core_error_class);

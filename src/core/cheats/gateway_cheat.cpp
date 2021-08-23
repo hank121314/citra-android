@@ -16,6 +16,11 @@
 #include "core/hle/service/hid/hid.h"
 #include "core/memory.h"
 
+#ifdef ANDROID
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#endif
+
 namespace Cheats {
 
 struct State {
@@ -473,8 +478,17 @@ std::string GatewayCheat::ToString() const {
 std::vector<std::unique_ptr<CheatBase>> GatewayCheat::LoadFile(const std::string& filepath) {
     std::vector<std::unique_ptr<CheatBase>> cheats;
 
+#ifdef ANDROID
+    boost::iostreams::stream<boost::iostreams::file_descriptor_source> file;
+    OpenFStream<std::ios_base::in>(file, filepath);
+    if(!file.is_open()) {
+        return cheats;
+    }
+#else
     std::ifstream file;
     OpenFStream(file, filepath, std::ios_base::in);
+#endif
+
     if (!file) {
         return cheats;
     }

@@ -13,7 +13,7 @@ import org.citra.citra_emu.activities.EmulationActivity;
 public final class StartupHandler {
     private static void handlePermissionsCheck(FragmentActivity parent) {
         // Ask the user to grant write permission if it's not already granted
-        PermissionsHandler.checkWritePermission(parent);
+        UserDirectoryHelper.grantCitraWritePermission(parent);
 
         String start_file = "";
         Bundle extras = parent.getIntent().getExtras();
@@ -31,7 +31,7 @@ public final class StartupHandler {
     }
 
     public static void HandleInit(FragmentActivity parent) {
-        if (PermissionsHandler.isFirstBoot(parent)) {
+        if (!UserDirectoryHelper.hasWriteAccess()) {
             // Prompt user with standard first boot disclaimer
             new AlertDialog.Builder(parent)
                     .setTitle(R.string.app_name)

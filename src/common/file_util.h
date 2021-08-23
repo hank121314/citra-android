@@ -355,6 +355,7 @@ private:
     bool Open();
 
     std::FILE* m_file = nullptr;
+    int m_fd = -1;
     bool m_good = true;
 
     std::string filename;
@@ -379,8 +380,16 @@ private:
     friend class boost::serialization::access;
 };
 
+#ifdef ANDROID
+std::string ParseContentUri(const std::string& path);
+#endif
+
 } // namespace FileUtil
 
+#ifdef ANDROID
+template <std::ios_base::openmode o, typename T>
+void OpenFStream(T& fstream, const std::string& filename);
+#else
 // To deal with Windows being dumb at unicode:
 template <typename T>
 void OpenFStream(T& fstream, const std::string& filename, std::ios_base::openmode openmode) {
@@ -390,3 +399,4 @@ void OpenFStream(T& fstream, const std::string& filename, std::ios_base::openmod
     fstream.open(filename, openmode);
 #endif
 }
+#endif

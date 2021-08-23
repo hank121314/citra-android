@@ -8,9 +8,14 @@ package org.citra.citra_emu;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
+import android.provider.DocumentsContract;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.view.Surface;
@@ -26,13 +31,15 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 
 import org.citra.citra_emu.activities.EmulationActivity;
-import org.citra.citra_emu.applets.SoftwareKeyboard;
+import org.citra.citra_emu.model.CheapDocument;
 import org.citra.citra_emu.utils.EmulationMenuSettings;
+import org.citra.citra_emu.utils.FileUtil;
 import org.citra.citra_emu.utils.Log;
-import org.citra.citra_emu.utils.PermissionsHandler;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 import static android.Manifest.permission.CAMERA;
@@ -68,6 +75,51 @@ public final class NativeLibrary {
 
     private NativeLibrary() {
         // Disallows instantiation.
+    }
+
+    public static boolean createFile(String directory, String filename) {
+        return FileUtil.createFile(directory, filename);
+    }
+
+    public static boolean createDir(String directory, String directoryName) {
+        return FileUtil.createDir(directory, directoryName);
+    }
+
+    public static int openContentUri(String path, String openmode) {
+        return FileUtil.openContentUri(path, openmode);
+    }
+
+    public static String[] getFilesName(String path) {
+        Uri uri = Uri.parse(path);
+        List<String> files = new ArrayList<>();
+        for (CheapDocument file: FileUtil.listFiles(uri)) {
+            files.add(file.getFilename());
+        }
+        return files.toArray(new String[0]);
+    }
+
+    public static long getSize(String path) {
+        return FileUtil.getFileSize(path);
+    }
+
+    public static boolean fileExists(String path) {
+        return FileUtil.Exists(path);
+    }
+
+    public static boolean isDirectory(String path) {
+        return FileUtil.isDirectory(path);
+    }
+
+    public static boolean copyFile(String sourcePath, String destinationParentPath, String destinationFilename) {
+        return FileUtil.copyFile(sourcePath, destinationParentPath, destinationFilename);
+    }
+
+    public static boolean renameFile(String path, String destinationFilename) {
+        return FileUtil.renameFile(path, destinationFilename);
+    }
+
+    public static boolean deleteDocument(String path) {
+        return FileUtil.deleteDocument(path);
     }
 
     /**
@@ -161,6 +213,9 @@ public final class NativeLibrary {
 
     // Create the config.ini file.
     public static native void CreateConfigFile();
+
+    public static native void CreateLogFile();
+
 
     public static native int DefaultCPUCore();
 

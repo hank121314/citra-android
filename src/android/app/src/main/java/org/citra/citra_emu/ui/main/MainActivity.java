@@ -1,7 +1,7 @@
 package org.citra.citra_emu.ui.main;
 
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,14 +20,13 @@ import org.citra.citra_emu.model.GameProvider;
 import org.citra.citra_emu.ui.platform.PlatformGamesFragment;
 import org.citra.citra_emu.utils.AddDirectoryHelper;
 import org.citra.citra_emu.utils.BillingManager;
+import org.citra.citra_emu.utils.UserDirectoryHelper;
 import org.citra.citra_emu.utils.DirectoryInitialization;
 import org.citra.citra_emu.utils.FileBrowserHelper;
-import org.citra.citra_emu.utils.PermissionsHandler;
 import org.citra.citra_emu.utils.PicassoUtils;
 import org.citra.citra_emu.utils.StartupHandler;
 import org.citra.citra_emu.utils.ThemeUtil;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -62,7 +61,7 @@ public final class MainActivity extends AppCompatActivity implements MainView {
 
         if (savedInstanceState == null) {
             StartupHandler.HandleInit(this);
-            if (PermissionsHandler.hasWriteAccess(this)) {
+            if (UserDirectoryHelper.hasWriteAccess()) {
                 mPlatformGamesFragment = new PlatformGamesFragment();
                 getSupportFragmentManager().beginTransaction().add(mFrameLayoutId, mPlatformGamesFragment)
                         .commit();
@@ -82,7 +81,7 @@ public final class MainActivity extends AppCompatActivity implements MainView {
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        if (PermissionsHandler.hasWriteAccess(this)) {
+        if (UserDirectoryHelper.hasWriteAccess()) {
             if (getSupportFragmentManager() == null) {
                 return;
             }
@@ -141,17 +140,20 @@ public final class MainActivity extends AppCompatActivity implements MainView {
 
     @Override
     public void launchSettingsActivity(String menuTag) {
-        if (PermissionsHandler.hasWriteAccess(this)) {
+        if (UserDirectoryHelper.hasWriteAccess()) {
             SettingsActivity.launch(this, menuTag, "");
         } else {
-            PermissionsHandler.checkWritePermission(this);
+            UserDirectoryHelper.grantCitraWritePermission(this);
         }
     }
 
     @Override
     public void launchFileListActivity(int request) {
-        if (PermissionsHandler.hasWriteAccess(this)) {
+        if (UserDirectoryHelper.hasWriteAccess()) {
             switch (request) {
+                case UserDirectoryHelper.REQUEST_CODE_WRITE_PERMISSION:
+                    UserDirectoryHelper.grantCitraWritePermission(this);
+                    break;
                 case MainPresenter.REQUEST_ADD_DIRECTORY:
                     FileBrowserHelper.openDirectoryPicker(this,
                                                       MainPresenter.REQUEST_ADD_DIRECTORY,
@@ -163,7 +165,7 @@ public final class MainActivity extends AppCompatActivity implements MainView {
                     break;
             }
         } else {
-            PermissionsHandler.checkWritePermission(this);
+            UserDirectoryHelper.grantCitraWritePermission(this);
         }
     }
 
@@ -176,9 +178,26 @@ public final class MainActivity extends AppCompatActivity implements MainView {
     protected void onActivityResult(int requestCode, int resultCode, Intent result) {
         super.onActivityResult(requestCode, resultCode, result);
         switch (requestCode) {
+            case UserDirectoryHelper.REQUEST_CODE_WRITE_PERMISSION:
+                if (resultCode == MainActivity.RESULT_OK && UserDirectoryHelper.setCitraDataDirectory(result.getDataString())) {
+                    int takeFlags = (Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    getContentResolver().takePersistableUriPermission(Uri.parse(result.getDataString()), takeFlags);
+
+                    DirectoryInitialization.resetCitraDirecotryState();
+                    DirectoryInitialization.start(this);
+
+                    if (mPlatformGamesFragment == null) {
+                        mPlatformGamesFragment = new PlatformGamesFragment();
+                        getSupportFragmentManager().beginTransaction().add(mFrameLayoutId, mPlatformGamesFragment)
+                                .commit();
+                    }
+                }
+                break;
             case MainPresenter.REQUEST_ADD_DIRECTORY:
                 // If the user picked a file, as opposed to just backing out.
                 if (resultCode == MainActivity.RESULT_OK) {
+                    int takeFlags = (Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    getContentResolver().takePersistableUriPermission(Uri.parse(result.getDataString()), takeFlags);
                     // When a new directory is picked, we currently will reset the existing games
                     // database. This effectively means that only one game directory is supported.
                     // TODO(bunnei): Consider fixing this in the future, or removing code for this.
@@ -196,35 +215,9 @@ public final class MainActivity extends AppCompatActivity implements MainView {
                             return;
                         }
                         NativeLibrary.InstallCIAS(selectedFiles);
-                        mPresenter.refeshGameList();
+                        mPresenter.refreshGameList();
                     }
                     break;
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case PermissionsHandler.REQUEST_CODE_WRITE_PERMISSION:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    DirectoryInitialization.start(this);
-
-                    mPlatformGamesFragment = new PlatformGamesFragment();
-                    getSupportFragmentManager().beginTransaction().add(mFrameLayoutId, mPlatformGamesFragment)
-                            .commit();
-
-                    // Immediately prompt user to select a game directory on first boot
-                    if (mPresenter != null) {
-                        mPresenter.launchFileListActivity(MainPresenter.REQUEST_ADD_DIRECTORY);
-                    }
-                } else {
-                    Toast.makeText(this, R.string.write_permission_needed, Toast.LENGTH_SHORT)
-                            .show();
-                }
-                break;
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-                break;
         }
     }
 

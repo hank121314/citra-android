@@ -28,7 +28,8 @@ add_library(main SHARED
     ndk_motion.h
 )
 
-target_link_libraries(main PRIVATE audio_core common core input_common network)
+
+target_link_libraries(main PRIVATE android_storage audio_core common core input_common network)
 target_link_libraries(main PRIVATE android camera2ndk mediandk jnigraphics EGL glad inih log yuv)
 
 set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} main)

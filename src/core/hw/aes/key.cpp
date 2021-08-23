@@ -10,6 +10,7 @@
 #include <cryptopp/modes.h>
 #include <cryptopp/sha.h>
 #include <fmt/format.h>
+#include "android_storage/android_storage.h"
 #include "common/common_paths.h"
 #include "common/file_util.h"
 #include "common/logging/log.h"
@@ -19,6 +20,11 @@
 #include "core/hw/aes/arithmetic128.h"
 #include "core/hw/aes/key.h"
 #include "core/hw/rsa/rsa.h"
+
+#ifdef ANDROID
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#endif
 
 namespace HW::AES {
 
@@ -428,8 +434,17 @@ void LoadNativeFirmKeysNew3DS() {
 void LoadPresetKeys() {
     const std::string filepath = FileUtil::GetUserPath(FileUtil::UserPath::SysDataDir) + AES_KEYS;
     FileUtil::CreateFullPath(filepath); // Create path if not already created
-    std::ifstream file;
+
+#ifdef ANDROID
+    boost::iostreams::stream<boost::iostreams::file_descriptor_source> file;
+    OpenFStream<std::ios_base::in>(file, filepath);
+    if(!file.is_open()) {
+        return;
+    }
+#else
+    std::fstream file;
     OpenFStream(file, filepath, std::ios_base::in);
+#endif
     if (!file) {
         return;
     }

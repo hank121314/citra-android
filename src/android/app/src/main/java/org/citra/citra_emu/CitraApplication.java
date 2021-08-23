@@ -8,11 +8,12 @@ import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 
 import org.citra.citra_emu.model.GameDatabase;
+import org.citra.citra_emu.utils.UserDirectoryHelper;
 import org.citra.citra_emu.utils.DirectoryInitialization;
-import org.citra.citra_emu.utils.PermissionsHandler;
 
 public class CitraApplication extends Application {
     public static GameDatabase databaseHelper;
@@ -40,8 +41,12 @@ public class CitraApplication extends Application {
         super.onCreate();
         application = this;
 
-        if (PermissionsHandler.hasWriteAccess(getApplicationContext())) {
-            DirectoryInitialization.start(getApplicationContext());
+        if (UserDirectoryHelper.hasWriteAccess()) {
+            Uri directory = UserDirectoryHelper.getCitraDataDirectory();
+            if (directory != null) {
+                NativeLibrary.SetUserDirectory(directory.toString());
+                DirectoryInitialization.start(getApplicationContext());
+            }
         }
 
         createNotificationChannel();

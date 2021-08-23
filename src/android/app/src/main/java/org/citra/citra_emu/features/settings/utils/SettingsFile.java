@@ -1,6 +1,10 @@
 package org.citra.citra_emu.features.settings.utils;
 
+import android.content.Context;
+import android.net.Uri;
+
 import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
 
 import org.citra.citra_emu.CitraApplication;
 import org.citra.citra_emu.NativeLibrary;
@@ -18,10 +22,11 @@ import org.citra.citra_emu.utils.Log;
 import org.ini4j.Wini;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeMap;
@@ -139,13 +144,15 @@ public final class SettingsFile {
      * @param view         The current view.
      * @return An Observable that emits a HashMap of the file's contents, then completes.
      */
-    static HashMap<String, SettingSection> readFile(final File ini, boolean isCustomGame, SettingsActivityView view) {
+    static HashMap<String, SettingSection> readFile(final DocumentFile ini, boolean isCustomGame, SettingsActivityView view) {
         HashMap<String, SettingSection> sections = new Settings.SettingsSectionMap();
 
         BufferedReader reader = null;
 
         try {
-            reader = new BufferedReader(new FileReader(ini));
+            Context context = CitraApplication.getAppContext();
+            InputStream inputStream = context.getContentResolver().openInputStream(ini.getUri());
+            reader = new BufferedReader(new InputStreamReader(inputStream));
 
             SettingSection current = null;
             for (String line; (line = reader.readLine()) != null; ) {
@@ -160,11 +167,11 @@ public final class SettingsFile {
                 }
             }
         } catch (FileNotFoundException e) {
-            Log.error("[SettingsFile] File not found: " + ini.getAbsolutePath() + e.getMessage());
+            Log.error("[SettingsFile] File not found: " + ini.getUri() + e.getMessage());
             if (view != null)
                 view.onSettingsFileNotFound();
         } catch (IOException e) {
-            Log.error("[SettingsFile] Error reading from: " + ini.getAbsolutePath() + e.getMessage());
+            Log.error("[SettingsFile] Error reading from: " + ini.getUri() + e.getMessage());
             if (view != null)
                 view.onSettingsFileNotFound();
         } finally {
@@ -172,7 +179,7 @@ public final class SettingsFile {
                 try {
                     reader.close();
                 } catch (IOException e) {
-                    Log.error("[SettingsFile] Error closing: " + ini.getAbsolutePath() + e.getMessage());
+                    Log.error("[SettingsFile] Error closing: " +  ini.getUri() + e.getMessage());
                 }
             }
         }
@@ -206,17 +213,23 @@ public final class SettingsFile {
      */
     public static void saveFile(final String fileName, TreeMap<String, SettingSection> sections,
                                 SettingsActivityView view) {
-        File ini = getSettingsFile(fileName);
+        DocumentFile ini = getSettingsFile(fileName);
 
         try {
-            Wini writer = new Wini(ini);
+            Context context = CitraApplication.getAppContext();
+            InputStream inputStream = context.getContentResolver().openInputStream(ini.getUri());
+            Wini writer = new Wini(inputStream);
 
             Set<String> keySet = sections.keySet();
             for (String key : keySet) {
                 SettingSection section = sections.get(key);
                 writeSection(writer, section);
             }
-            writer.store();
+            inputStream.close();
+            OutputStream outputStream = context.getContentResolver().openOutputStream(ini.getUri());
+            writer.store(outputStream);
+            outputStream.flush();
+            outputStream.close();
         } catch (IOException e) {
             Log.error("[SettingsFile] File not found: " + fileName + ".ini: " + e.getMessage());
             view.showToastMessage(CitraApplication.getAppContext().getString(R.string.error_saving, fileName, e.getMessage()), false);
@@ -257,13 +270,18 @@ public final class SettingsFile {
     }
 
     @NonNull
-    private static File getSettingsFile(String fileName) {
-        return new File(
-                DirectoryInitialization.getUserDirectory() + "/config/" + fileName + ".ini");
+    private static DocumentFile getSettingsFile(String fileName) {
+        DocumentFile root = DocumentFile.fromTreeUri(CitraApplication.getAppContext(), Uri.parse(DirectoryInitialization.getUserDirectory()));
+        DocumentFile configDirectory = root.findFile("config");
+        DocumentFile configFile = configDirectory.findFile(fileName + ".ini");
+        return configFile;
     }
 
-    private static File getCustomGameSettingsFile(String gameId) {
-        return new File(DirectoryInitialization.getUserDirectory() + "/GameSettings/" + gameId + ".ini");
+    private static DocumentFile getCustomGameSettingsFile(String gameId) {
+        DocumentFile root = DocumentFile.fromTreeUri(CitraApplication.getAppContext(), Uri.parse(DirectoryInitialization.getUserDirectory()));
+        DocumentFile configDirectory = root.findFile("GameSettings");
+        DocumentFile configFile = configDirectory.findFile(gameId + ".ini");
+        return configFile;
     }
 
     private static SettingSection sectionFromLine(String line, boolean isCustomGame) {

@@ -131,7 +131,7 @@ private:
     std::optional<ShaderDiskCacheDecompiled> LoadDecompiledEntry();
 
     /// Saves a decompiled entry to the passed file. Does not check for collisions.
-    void SaveDecompiledToFile(FileUtil::IOFile& file, u64 unique_identifier,
+    void SaveDecompiledToFile(u64 unique_identifier,
                               const ShaderDecompiler::ProgramResult& code, bool sanitize_mul);
 
     /// Saves a decompiled entry to the virtual precompiled cache. Does not check for collisions.
@@ -142,7 +142,8 @@ private:
     bool IsUsable() const;
 
     /// Opens current game's transferable file and write it's header if it doesn't exist
-    FileUtil::IOFile AppendTransferableFile();
+    void AppendTransferableFile();
+    std::optional<FileUtil::IOFile> m_transferable_file;
 
     /// Save precompiled header to precompiled_cache_in_memory
     void SavePrecompiledHeaderToVirtualPrecompiledCache();
@@ -223,7 +224,8 @@ private:
     u64 program_id{};
     std::string title_id;
 
-    FileUtil::IOFile AppendPrecompiledFile();
+    void AppendPrecompiledFile();
+    std::optional<FileUtil::IOFile> m_precompiled_file;
 };
 
 } // namespace OpenGL

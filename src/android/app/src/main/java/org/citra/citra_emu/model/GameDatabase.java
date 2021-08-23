@@ -6,19 +6,12 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-import android.os.ParcelFileDescriptor;
-
-import androidx.documentfile.provider.DocumentFile;
 
 import org.citra.citra_emu.NativeLibrary;
-import org.citra.citra_emu.utils.FileBrowserHelper;
+import org.citra.citra_emu.utils.FileUtil;
 import org.citra.citra_emu.utils.Log;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -162,10 +155,9 @@ public final class GameDatabase extends SQLiteOpenHelper {
             String folderPath = folderCursor.getString(FOLDER_COLUMN_PATH);
 
             Uri folderUri = Uri.parse(folderPath);
-            DocumentFile documentFile = DocumentFile.fromTreeUri(this.context, folderUri);
 
             // If the folder is empty because it no longer exists, remove it from the library.
-            if (documentFile == null || documentFile.listFiles().length == 0) {
+            if (FileUtil.listFiles(folderUri).length == 0) {
                 Log.error(
                         "[GameDatabase] Folder no longer exists. Removing from the library: " + folderPath);
                 database.delete(TABLE_NAME_FOLDERS,
@@ -173,7 +165,7 @@ public final class GameDatabase extends SQLiteOpenHelper {
                         new String[]{Long.toString(folderCursor.getLong(COLUMN_DB_ID))});
             }
 
-            this.addGamesRecursive(database, documentFile, allowedExtensions, 3);
+            this.addGamesRecursive(database, folderUri, allowedExtensions, 3);
         }
 
         fileCursor.close();
@@ -185,39 +177,28 @@ public final class GameDatabase extends SQLiteOpenHelper {
         database.close();
     }
 
-    private void addGamesRecursive(SQLiteDatabase database, DocumentFile parent, Set<String> allowedExtensions, int depth) {
+    private void addGamesRecursive(SQLiteDatabase database, Uri parent, Set<String> allowedExtensions, int depth) {
         if (depth <= 0) {
             return;
         }
 
-        DocumentFile[] children = parent.listFiles();
-        for (DocumentFile file : children) {
-            if (!file.exists()) {
-                continue;
-            }
+        CheapDocument[] children = FileUtil.listFiles(parent);
+        for (CheapDocument file : children) {
             if (file.isDirectory()) {
                 Set<String> newExtensions = new HashSet<>(Arrays.asList(
                         ".3ds", ".3dsx", ".elf", ".axf", ".cci", ".cxi", ".app"));
-                this.addGamesRecursive(database, file, newExtensions, depth - 1);
+                this.addGamesRecursive(database, file.getUri(), newExtensions, depth - 1);
             } else {
-                try {
-                    ParcelFileDescriptor parcelFileDescriptor = this.context.getContentResolver().openFileDescriptor(file.getUri(), "r");
-                    Path fileDescriptorPath = Paths.get(FileBrowserHelper.FILE_DESCRIPTOR_PATH + parcelFileDescriptor.detachFd());
-                    Path filepath = Files.readSymbolicLink(fileDescriptorPath);
-                    parcelFileDescriptor.close();
-                    String filename = filepath.toAbsolutePath().toString();
+                String filename = file.getUri().toString();
 
-                    int extensionStart = filename.lastIndexOf('.');
-                    if (extensionStart > 0) {
-                        String fileExtension = filename.substring(extensionStart);
+                int extensionStart = filename.lastIndexOf('.');
+                if (extensionStart > 0) {
+                    String fileExtension = filename.substring(extensionStart);
 
-                        // Check that the file has an extension we care about before trying to read out of it.
-                        if (allowedExtensions.contains(fileExtension.toLowerCase())) {
-                            attemptToAddGame(database, filename);
-                        }
+                    // Check that the file has an extension we care about before trying to read out of it.
+                    if (allowedExtensions.contains(fileExtension.toLowerCase())) {
+                        attemptToAddGame(database, filename);
                     }
-                } catch(IOException e) {
-                    Log.error("[GameDatabase] Cannot add game with given path: " + file.getUri());
                 }
             }
         }

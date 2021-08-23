@@ -299,18 +299,18 @@ std::optional<ShaderDiskCacheDecompiled> ShaderDiskCache::LoadDecompiledEntry() 
     return entry;
 }
 
-void ShaderDiskCache::SaveDecompiledToFile(FileUtil::IOFile& file, u64 unique_identifier,
+void ShaderDiskCache::SaveDecompiledToFile(u64 unique_identifier,
                                            const ShaderDecompiler::ProgramResult& result,
                                            bool sanitize_mul) {
     if (!IsUsable())
         return;
 
-    if (file.WriteObject(static_cast<u32>(PrecompiledEntryKind::Decompiled)) != 1 ||
-        file.WriteObject(unique_identifier) != 1 || file.WriteObject(sanitize_mul) != 1 ||
-        file.WriteObject(static_cast<u32>(result.code.size())) != 1 ||
-        file.WriteArray(result.code.data(), result.code.size()) != result.code.size()) {
+    if (m_precompiled_file->WriteObject(static_cast<u32>(PrecompiledEntryKind::Decompiled)) != 1 ||
+        m_precompiled_file->WriteObject(unique_identifier) != 1 || m_precompiled_file->WriteObject(sanitize_mul) != 1 ||
+        m_precompiled_file->WriteObject(static_cast<u32>(result.code.size())) != 1 ||
+        m_precompiled_file->WriteArray(result.code.data(), result.code.size()) != result.code.size()) {
         LOG_ERROR(Render_OpenGL, "Failed to save decompiled cache entry - removing");
-        file.Close();
+        m_precompiled_file->Close();
         InvalidatePrecompiled();
     }
 }
@@ -355,12 +355,14 @@ void ShaderDiskCache::SaveRaw(const ShaderDiskCacheRaw& entry) {
         return;
     }
 
-    FileUtil::IOFile file = AppendTransferableFile();
-    if (!file.IsOpen())
+    AppendTransferableFile();
+    if (!m_transferable_file || !m_transferable_file->IsOpen()) {
+        m_transferable_file.reset();
         return;
-    if (file.WriteObject(TransferableEntryKind::Raw) != 1 || !entry.Save(file)) {
+    }
+    if (m_transferable_file->WriteObject(TransferableEntryKind::Raw) != 1 || !entry.Save(m_transferable_file.value())) {
         LOG_ERROR(Render_OpenGL, "Failed to save raw transferable cache entry - removing");
-        file.Close();
+        m_transferable_file->Close();
         InvalidateAll();
         return;
     }
@@ -418,9 +420,11 @@ void ShaderDiskCache::SaveDumpToFile(u64 unique_identifier, GLuint program, bool
     if (!IsUsable())
         return;
 
-    FileUtil::IOFile file = AppendPrecompiledFile();
-    if (!file.IsOpen())
+    AppendPrecompiledFile();
+    if (!m_precompiled_file || !m_precompiled_file->IsOpen()) {
+        m_precompiled_file.reset();
         return;
+    }
 
     GLint binary_length{};
     glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &binary_length);
@@ -432,11 +436,11 @@ void ShaderDiskCache::SaveDumpToFile(u64 unique_identifier, GLuint program, bool
     std::vector<u8> binary(binary_length);
     glGetProgramBinary(program, binary_length, nullptr, &binary_format, binary.data());
 
-    if (file.WriteObject(static_cast<u32>(PrecompiledEntryKind::Dump)) != 1 ||
-        file.WriteObject(unique_identifier) != 1 ||
-        file.WriteObject(static_cast<u32>(binary_format)) != 1 ||
-        file.WriteObject(static_cast<u32>(binary_length)) != 1 ||
-        file.WriteArray(binary.data(), binary.size()) != binary.size()) {
+    if (m_precompiled_file->WriteObject(static_cast<u32>(PrecompiledEntryKind::Dump)) != 1 ||
+        m_precompiled_file->WriteObject(unique_identifier) != 1 ||
+        m_precompiled_file->WriteObject(static_cast<u32>(binary_format)) != 1 ||
+        m_precompiled_file->WriteObject(static_cast<u32>(binary_length)) != 1 ||
+        m_precompiled_file->WriteArray(binary.data(), binary.size()) != binary.size()) {
         LOG_ERROR(Render_OpenGL, "Failed to save binary program file in shader={:016x} - removing",
                   unique_identifier);
         InvalidatePrecompiled();
@@ -445,58 +449,58 @@ void ShaderDiskCache::SaveDumpToFile(u64 unique_identifier, GLuint program, bool
 
     // SaveDecompiled is used only to store the accurate multiplication setting, a better way is to
     // probably change the header in SaveDump
-    SaveDecompiledToFile(file, unique_identifier, {}, sanitize_mul);
+    SaveDecompiledToFile(unique_identifier, {}, sanitize_mul);
 }
 
 bool ShaderDiskCache::IsUsable() const {
     return tried_to_load && Settings::values.use_disk_shader_cache;
 }
 
-FileUtil::IOFile ShaderDiskCache::AppendTransferableFile() {
+void ShaderDiskCache::AppendTransferableFile() {
+    if (m_transferable_file) return;
     if (!EnsureDirectories())
-        return {};
+        return;
 
     const auto transferable_path{GetTransferablePath()};
     const bool existed = FileUtil::Exists(transferable_path);
 
-    FileUtil::IOFile file(transferable_path, "ab");
-    if (!file.IsOpen()) {
+    m_transferable_file = FileUtil::IOFile(transferable_path, "ab");
+    if (!m_transferable_file->IsOpen()) {
         LOG_ERROR(Render_OpenGL, "Failed to open transferable cache in path={}", transferable_path);
-        return {};
+        return;
     }
-    if (!existed || file.GetSize() == 0) {
+    if (!existed || m_transferable_file->GetSize() == 0) {
         // If the file didn't exist, write its version
-        if (file.WriteObject(NativeVersion) != 1) {
+        if (m_transferable_file->WriteObject(NativeVersion) != 1) {
             LOG_ERROR(Render_OpenGL, "Failed to write transferable cache version in path={}",
                       transferable_path);
-            return {};
+            return;
         }
     }
-    return file;
 }
 
-FileUtil::IOFile ShaderDiskCache::AppendPrecompiledFile() {
+void ShaderDiskCache::AppendPrecompiledFile() {
+    if (m_precompiled_file) return;
     if (!EnsureDirectories())
-        return {};
+        return;
 
     const auto precompiled_path{GetPrecompiledPath()};
     const bool existed = FileUtil::Exists(precompiled_path);
 
-    FileUtil::IOFile file(precompiled_path, "ab");
-    if (!file.IsOpen()) {
+    m_precompiled_file = FileUtil::IOFile(precompiled_path, "ab");
+    if (!m_precompiled_file->IsOpen()) {
         LOG_ERROR(Render_OpenGL, "Failed to open precompiled cache in path={}", precompiled_path);
-        return {};
+        return;
     }
-    if (!existed || file.GetSize() == 0) {
+    if (!existed || m_precompiled_file->GetSize() == 0) {
         // If the file didn't exist, write its version
         const auto hash{GetShaderCacheVersionHash()};
-        if (file.WriteArray(hash.data(), hash.size()) != hash.size()) {
+        if (m_precompiled_file->WriteArray(hash.data(), hash.size()) != hash.size()) {
             LOG_ERROR(Render_OpenGL, "Failed to write precompiled cache version in path={}",
                       precompiled_path);
-            return {};
+            return;
         }
     }
-    return file;
 }
 
 void ShaderDiskCache::SavePrecompiledHeaderToVirtualPrecompiledCache() {
