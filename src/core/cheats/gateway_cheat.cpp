@@ -481,8 +481,8 @@ std::vector<std::unique_ptr<CheatBase>> GatewayCheat::LoadFile(const std::string
 #ifdef ANDROID
     boost::iostreams::stream<boost::iostreams::file_descriptor_source> file;
     OpenFStream<std::ios_base::in>(file, filepath);
-    if(!file.is_open()) {
-         return cheats;
+    if (!file.is_open()) {
+        return cheats;
     }
 #else
     std::ifstream file;
