@@ -25,7 +25,7 @@ public class UserDirectoryHelper {
 
     public static void grantCitraWritePermission(Activity activity) {
         Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        i.putExtra(Intent.EXTRA_TITLE, R.string.select_citra_data_folder);
+        i.putExtra(Intent.EXTRA_TITLE, R.string.select_citra_user_folder);
         i.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
         activity.startActivityForResult(i, REQUEST_CODE_WRITE_PERMISSION);
     }

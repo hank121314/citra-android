@@ -16,7 +16,7 @@
             <item
                 android:id="@+id/button_select_root"
                 android:icon="@drawable/ic_folder"
-                android:title="@string/select_citra_data_folder"
+                android:title="@string/select_citra_user_folder"
                 app:showAsAction="ifRoom" />
             <item
                 android:id="@+id/button_add_directory"
