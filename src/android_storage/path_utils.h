@@ -8,9 +8,9 @@
 #include <string>
 
 namespace AndroidStorage {
-    std::string URIEncode(const std::string &value);
-    bool endsWith (std::string const &fullString, std::string const &ending);
-    std::string GetParentPath(const std::string &path);
-    std::string GetFilename(const std::string path);
-}
+std::string URIEncode(const std::string& value);
+bool endsWith(std::string const& fullString, std::string const& ending);
+std::string GetParentPath(const std::string& path);
+std::string GetFilename(const std::string path);
+} // namespace AndroidStorage
 #endif

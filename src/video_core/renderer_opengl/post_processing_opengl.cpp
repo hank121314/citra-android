@@ -11,8 +11,8 @@
 #include "video_core/renderer_opengl/post_processing_opengl.h"
 
 #ifdef ANDROID
-#include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
 #endif
 
 namespace OpenGL {
@@ -191,7 +191,7 @@ std::string GetPostProcessingShaderCode(bool anaglyph, std::string_view shader) 
 #ifdef ANDROID
     boost::iostreams::stream<boost::iostreams::file_descriptor_source> file;
     OpenFStream<std::ios_base::in>(file, shader_path);
-    if(!file.is_open()) {
+    if (!file.is_open()) {
         return "";
     }
 #else

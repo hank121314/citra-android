@@ -10,15 +10,14 @@
 #include <android/native_window_jni.h>
 
 #include "audio_core/dsp_interface.h"
+#include "common/common_paths.h"
 #include "common/file_util.h"
+#include "common/logging/backend.h"
 #include "common/logging/log.h"
 #include "common/microprofile.h"
 #include "common/scm_rev.h"
 #include "common/scope_exit.h"
 #include "common/string_util.h"
-#include "common/common_paths.h"
-#include "common/logging/backend.h"
-#include "common/logging/log.h"
 #include "core/core.h"
 #include "core/frontend/applets/default_applets.h"
 #include "core/frontend/camera/factory.h"
@@ -508,11 +507,10 @@ void Java_org_citra_citra_1emu_NativeLibrary_CreateConfigFile(JNIEnv* env,
     Config{};
 }
 
-void Java_org_citra_citra_1emu_NativeLibrary_CreateLogFile(JNIEnv* env,
-jclass clazz) {
+void Java_org_citra_citra_1emu_NativeLibrary_CreateLogFile(JNIEnv* env, jclass clazz) {
     FileUtil::CreateFullPath(FileUtil::GetUserPath(FileUtil::UserPath::LogDir));
     Log::AddBackend(std::make_unique<Log::FileBackend>(
-            FileUtil::GetUserPath(FileUtil::UserPath::LogDir) + LOG_FILE));
+        FileUtil::GetUserPath(FileUtil::UserPath::LogDir) + LOG_FILE));
     LOG_INFO(Frontend, "Logging backend initialised");
 }
 

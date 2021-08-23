@@ -22,8 +22,10 @@
 #include "core/hw/rsa/rsa.h"
 
 #ifdef ANDROID
-#include <boost/iostreams/stream.hpp>
+
 #include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
+
 #endif
 
 namespace HW::AES {
@@ -438,7 +440,7 @@ void LoadPresetKeys() {
 #ifdef ANDROID
     boost::iostreams::stream<boost::iostreams::file_descriptor_source> file;
     OpenFStream<std::ios_base::in>(file, filepath);
-    if(!file.is_open()) {
+    if (!file.is_open()) {
         return;
     }
 #else

@@ -17,8 +17,8 @@
 #include "core/memory.h"
 
 #ifdef ANDROID
-#include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
 #endif
 
 namespace Cheats {
@@ -482,7 +482,7 @@ std::vector<std::unique_ptr<CheatBase>> GatewayCheat::LoadFile(const std::string
     boost::iostreams::stream<boost::iostreams::file_descriptor_source> file;
     OpenFStream<std::ios_base::in>(file, filepath);
     if(!file.is_open()) {
-        return cheats;
+         return cheats;
     }
 #else
     std::ifstream file;

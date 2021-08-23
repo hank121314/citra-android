@@ -306,9 +306,11 @@ void ShaderDiskCache::SaveDecompiledToFile(u64 unique_identifier,
         return;
 
     if (m_precompiled_file->WriteObject(static_cast<u32>(PrecompiledEntryKind::Decompiled)) != 1 ||
-        m_precompiled_file->WriteObject(unique_identifier) != 1 || m_precompiled_file->WriteObject(sanitize_mul) != 1 ||
+        m_precompiled_file->WriteObject(unique_identifier) != 1 ||
+        m_precompiled_file->WriteObject(sanitize_mul) != 1 ||
         m_precompiled_file->WriteObject(static_cast<u32>(result.code.size())) != 1 ||
-        m_precompiled_file->WriteArray(result.code.data(), result.code.size()) != result.code.size()) {
+        m_precompiled_file->WriteArray(result.code.data(), result.code.size()) !=
+            result.code.size()) {
         LOG_ERROR(Render_OpenGL, "Failed to save decompiled cache entry - removing");
         m_precompiled_file->Close();
         InvalidatePrecompiled();
@@ -360,7 +362,8 @@ void ShaderDiskCache::SaveRaw(const ShaderDiskCacheRaw& entry) {
         m_transferable_file.reset();
         return;
     }
-    if (m_transferable_file->WriteObject(TransferableEntryKind::Raw) != 1 || !entry.Save(m_transferable_file.value())) {
+    if (m_transferable_file->WriteObject(TransferableEntryKind::Raw) != 1 ||
+        !entry.Save(m_transferable_file.value())) {
         LOG_ERROR(Render_OpenGL, "Failed to save raw transferable cache entry - removing");
         m_transferable_file->Close();
         InvalidateAll();
@@ -457,7 +460,8 @@ bool ShaderDiskCache::IsUsable() const {
 }
 
 void ShaderDiskCache::AppendTransferableFile() {
-    if (m_transferable_file) return;
+    if (m_transferable_file)
+        return;
     if (!EnsureDirectories())
         return;
 
@@ -480,7 +484,8 @@ void ShaderDiskCache::AppendTransferableFile() {
 }
 
 void ShaderDiskCache::AppendPrecompiledFile() {
-    if (m_precompiled_file) return;
+    if (m_precompiled_file)
+        return;
     if (!EnsureDirectories())
         return;
 

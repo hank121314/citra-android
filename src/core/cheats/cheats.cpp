@@ -14,8 +14,8 @@
 #include "core/hw/gpu.h"
 
 #ifdef ANDROID
-#include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
 #include "android_storage/android_storage.h"
 #endif
 
@@ -80,7 +80,8 @@ void CheatEngine::SaveCheatFile() const {
 
 #ifdef ANDROID
     boost::iostreams::stream<boost::iostreams::file_descriptor_sink> file;
-    OpenFStream<std::ios_base::out, boost::iostreams::stream<boost::iostreams::file_descriptor_sink>>(file, filepath);
+    OpenFStream<std::ios_base::out,
+                boost::iostreams::stream<boost::iostreams::file_descriptor_sink>>(file, filepath);
 #else
     std::ofstream file;
     OpenFStream(file, filepath, std::ios_base::out);

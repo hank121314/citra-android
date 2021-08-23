@@ -69,8 +69,8 @@
 #include <sys/stat.h>
 
 #ifdef ANDROID
-#include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
 #include "android_storage/android_storage.h"
 #include "android_storage/content_uri.h"
 #endif
@@ -85,7 +85,8 @@
 namespace FileUtil {
 
 #ifdef ANDROID
-std::unique_ptr<AndroidStorage::ContentURI> g_android_content_uri = std::make_unique<AndroidStorage::ContentURI>();
+std::unique_ptr<AndroidStorage::ContentURI> g_android_content_uri =
+    std::make_unique<AndroidStorage::ContentURI>();
 std::string ParseContentUri(const std::string& path) {
     return g_android_content_uri->Parse(path);
 }
@@ -118,7 +119,7 @@ bool Exists(const std::string& filename) {
 
     int result = _wstat64(Common::UTF8ToUTF16W(copy).c_str(), &file_info);
 #elif ANDROID
-    int result =  AndroidStorage::FileExists(ParseContentUri(filename)) ? 0 : -1;
+    int result = AndroidStorage::FileExists(ParseContentUri(filename)) ? 0 : -1;
 #else
     int result = stat(copy.c_str(), &file_info);
 #endif
@@ -305,7 +306,8 @@ bool Rename(const std::string& srcFilename, const std::string& destFilename) {
 #elif ANDROID
     auto android_src_filename = ParseContentUri(srcFilename);
     // Skip '/' by adding 1
-    auto dest_filename = destFilename.substr(destFilename.find_last_of('/') + 1, destFilename.length());
+    auto dest_filename =
+        destFilename.substr(destFilename.find_last_of('/') + 1, destFilename.length());
     if (AndroidStorage::RenameFile(android_src_filename, dest_filename)) {
         return true;
     }
@@ -400,8 +402,7 @@ u64 GetSize(const std::string& filename) {
     LOG_ERROR(Common_Filesystem, "Stat failed {}", filename);
     return 0;
 #else
-    if (stat(filename.c_str(), &buf) == 0)
-    {
+    if (stat(filename.c_str(), &buf) == 0) {
         LOG_TRACE(Common_Filesystem, "{}: {}", filename, buf.st_size);
         return buf.st_size;
     }
@@ -470,7 +471,7 @@ bool ForeachDirectoryEntry(u64* num_entries_out, const std::string& directory,
         const std::string virtual_name(Common::UTF16ToUTF8(ffd.cFileName));
 #elif ANDROID
     auto result = AndroidStorage::GetFilesName(ParseContentUri(directory));
-    for (auto virtual_name: result) {
+    for (auto virtual_name : result) {
 #else
     DIR* dirp = opendir(directory.c_str());
     if (!dirp)
@@ -492,7 +493,7 @@ bool ForeachDirectoryEntry(u64* num_entries_out, const std::string& directory,
         found_entries += ret_entries;
 
 #ifdef _WIN32
-   } while (FindNextFileW(handle_find, &ffd) != 0);
+    } while (FindNextFileW(handle_find, &ffd) != 0);
     FindClose(handle_find);
 #elif ANDROID
     }
@@ -585,7 +586,7 @@ void CopyDir(const std::string& source_path, const std::string& dest_path) {
         FileUtil::CreateFullPath(dest_path);
 #ifdef ANDROID
     auto result = AndroidStorage::GetFilesName(ParseContentUri(source_path));
-    for (auto virtualName: result) {
+    for (auto virtualName : result) {
 #else
     DIR* dirp = opendir(source_path.c_str());
     if (!dirp)
@@ -1051,11 +1052,16 @@ bool IOFile::Open() {
     if (filename.rfind("content://", 0) == 0) {
         AndroidStorage::AndroidOpenMode android_open_mode = AndroidStorage::ParseOpenmode(openmode);
         if (android_open_mode == AndroidStorage::AndroidOpenMode::WRITE
-            || android_open_mode == AndroidStorage::AndroidOpenMode::READ_WRITE
-            || android_open_mode == AndroidStorage::AndroidOpenMode::WRITE_APPEND
-            || android_open_mode == AndroidStorage::AndroidOpenMode::WRITE_TRUNCATE
-            || android_open_mode == AndroidStorage::AndroidOpenMode::READ_WRITE_TRUNCATE
-            || android_open_mode == AndroidStorage::AndroidOpenMode::READ_WRITE_APPEND) {
+        id
+            open_mode == AndroidStorage::AndroidOpenMode::READ_WRITE
+        id
+            open_mode == AndroidStorage::AndroidOpenMode::WRITE_APPEND
+        id
+            open_mode == AndroidStorage::AndroidOpenMode::WRITE_TRUNCATE
+        id
+            open_mode == AndroidStorage::AndroidOpenMode::READ_WRITE_TRUNCATE
+        id
+            open_mode == AndroidStorage::AndroidOpenMode::READ_WRITE_APPEND) {
             if (!FileUtil::Exists(filename)) {
                 if (!AndroidStorage::CreateFile(ParseContentUri(filename))) {
                     m_good = m_file != nullptr;
@@ -1069,7 +1075,8 @@ bool IOFile::Open() {
             m_file = fdopen(m_fd, openmode.c_str());
             errorNum = errno;
             if (errorNum != 0 && m_file == nullptr) {
-                LOG_ERROR(Common_Filesystem, "Error on file: {}, error: {}", filename, strerror(errorNum));
+                LOG_ERROR(Common_Filesystem, "Error on file: {}, error: {}", filename, strerro
+                          (errorNum));
             }
             m_good = m_file != nullptr;
             return m_good;
@@ -1172,18 +1179,24 @@ template <typename T>
 using boost_iostreams = boost::iostreams::stream<T>;
 
 template<>
-void OpenFStream<std::ios_base::in>(boost_iostreams<boost::iostreams::file_descriptor_source>& fstream, const std::string& filename) {
-    int fd = AndroidStorage::OpenContentUri(FileUtil::ParseContentUri(filename), AndroidStorage::AndroidOpenMode::READ);
+void  OpenFStream<std::ios_base::in>(boost_io
+    streams<boost::iostreams::file_descriptor_source>& fstream, const s
+    d::string& filename) {
+    int fd = AndroidStorage::OpenContentUri(FileUtil::ParseContentUri(filename), Android
+                                            torage::AndroidOpenMode::READ);
     if (fd == -1) {
         return;
     }
-    boost::iostreams::file_descriptor_source file_descriptor_source(fd, boost::iostreams::close_handle);
+    boost::iostreams::file_descriptor_source file_descriptor_source(fd, boost::
+                                                                    ostreams::close_handle);
     fstream.open(file_descriptor_source);
 }
 
 template<>
-void OpenFStream<std::ios_base::out>(boost_iostreams<boost::iostreams::file_descriptor_sink>& fstream, const std::string& filename) {
-    int fd = AndroidStorage::OpenContentUri(FileUtil::ParseContentUri(filename), AndroidStorage::AndroidOpenMode::WRITE);
+void  OpenFStream<std::ios_base::out>(boost_io
+    streams<boost::iostreams::file_descriptor_sink>& fstream, const std::string& filename) {
+    int fd = AndroidStorage::OpenContentUri(FileUtil::ParseContentUri(filename), Android
+                                            torage::AndroidOpenMode::WRITE);
     if (fd == -1) {
         return;
     }
@@ -1192,8 +1205,10 @@ void OpenFStream<std::ios_base::out>(boost_iostreams<boost::iostreams::file_desc
 }
 
 template<>
-void OpenFStream<std::ios::in | std::ios_base::out | std::ios::binary>(boost_iostreams<boost::iostreams::file_descriptor>& fstream, const std::string& filename) {
-    int fd = AndroidStorage::OpenContentUri(FileUtil::ParseContentUri(filename), AndroidStorage::AndroidOpenMode::READ_WRITE);
+void  OpenFStream<std::ios::in | std::ios_base::out | std::ios::binary>(boost_io
+    streams<boost::iostreams::file_descriptor>& fstream, const std::string& filename) {
+    int fd = AndroidStorage::OpenContentUri(FileUtil::ParseContentUri(filename), Android
+                                            torage::AndroidOpenMode::READ_WRITE);
     if (fd == -1) {
         return;
     }
