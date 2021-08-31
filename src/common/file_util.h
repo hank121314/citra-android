@@ -380,10 +380,6 @@ private:
     friend class boost::serialization::access;
 };
 
-#ifdef ANDROID
-std::string ParseContentUri(const std::string& path);
-#endif
-
 } // namespace FileUtil
 
 #ifdef ANDROID

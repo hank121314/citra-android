@@ -157,7 +157,7 @@ public final class GameDatabase extends SQLiteOpenHelper {
             Uri folderUri = Uri.parse(folderPath);
 
             // If the folder is empty because it no longer exists, remove it from the library.
-            if (FileUtil.listFiles(folderUri).length == 0) {
+            if (FileUtil.listFiles(context, folderUri).length == 0) {
                 Log.error(
                         "[GameDatabase] Folder no longer exists. Removing from the library: " + folderPath);
                 database.delete(TABLE_NAME_FOLDERS,
@@ -182,7 +182,7 @@ public final class GameDatabase extends SQLiteOpenHelper {
             return;
         }
 
-        CheapDocument[] children = FileUtil.listFiles(parent);
+        CheapDocument[] children = FileUtil.listFiles(context, parent);
         for (CheapDocument file : children) {
             if (file.isDirectory()) {
                 Set<String> newExtensions = new HashSet<>(Arrays.asList(

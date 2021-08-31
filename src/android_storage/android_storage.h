@@ -10,17 +10,19 @@
 #include <jni.h>
 
 #define ANDROID_STORAGE_FUNCTIONS(V)                                                               \
-    V(CreateFile, bool, (const std::string& path), create_file, "createFile",                      \
-      "(Ljava/lang/String;Ljava/lang/String;)Z")                                                   \
-    V(CreateDir, bool, (const std::string& path), create_dir, "createDir",                         \
-      "(Ljava/lang/String;Ljava/lang/String;)Z")                                                   \
+    V(CreateFile, bool, (const std::string& directory, const std::string& filename), create_file,  \
+      "createFile", "(Ljava/lang/String;Ljava/lang/String;)Z")                                     \
+    V(CreateDir, bool, (const std::string& directory, const std::string& filename), create_dir,    \
+      "createDir", "(Ljava/lang/String;Ljava/lang/String;)Z")                                      \
     V(OpenContentUri, int, (const std::string& filepath, AndroidOpenMode openmode),                \
       open_content_uri, "openContentUri", "(Ljava/lang/String;Ljava/lang/String;)I")               \
     V(GetFilesName, std::vector<std::string>, (const std::string& filepath), get_files_name,       \
       "getFilesName", "(Ljava/lang/String;)[Ljava/lang/String;")                                   \
-    V(CopyFile, bool, (const std::string& source, const std::string& destination), copy_file,      \
-      "copyFile", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z")                     \
-    V(RenameFile, bool, (const std::string& source, const std::string& destination), rename_file,  \
+    V(CopyFile, bool,                                                                              \
+      (const std::string& source, const std::string& destination_path,                             \
+       const std::string& destination_filename),                                                   \
+      copy_file, "copyFile", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z")          \
+    V(RenameFile, bool, (const std::string& source, const std::string& filename), rename_file,     \
       "renameFile", "(Ljava/lang/String;Ljava/lang/String;)Z")
 
 #define ANDROID_SINGLE_PATH_DETERMINE_FUNCTIONS(V)                                                 \

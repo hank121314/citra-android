@@ -13,7 +13,7 @@ import java.nio.IntBuffer;
 public class GameIconRequestHandler extends RequestHandler {
     @Override
     public boolean canHandleRequest(Request data) {
-        return "content".equals(data.uri.getScheme());
+        return "content".equals(data.uri.getScheme()) || data.uri.getScheme() == null;
     }
 
     @Override

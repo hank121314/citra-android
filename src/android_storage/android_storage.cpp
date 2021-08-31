@@ -4,7 +4,6 @@
 
 #ifdef ANDROID
 #include "android_storage.h"
-#include "path_utils.h"
 
 namespace AndroidStorage {
 JNIEnv* GetEnvForThread() {
@@ -74,34 +73,28 @@ void UnRegisterCallbacks() {
 #undef FR
 }
 
-bool CreateFile(const std::string& path) {
+bool CreateFile(const std::string& directory, const std::string& filename) {
     if (create_file == nullptr)
         return false;
     auto env = GetEnvForThread();
-    auto directory = GetParentPath(path);
-    auto filename = GetFilename(path);
     jstring j_directory = env->NewStringUTF(directory.c_str());
     jstring j_filename = env->NewStringUTF(filename.c_str());
     return env->CallStaticBooleanMethod(native_library, create_file, j_directory, j_filename);
 }
 
-bool CreateDir(const std::string& path) {
+bool CreateDir(const std::string& directory, const std::string& filename) {
     if (create_dir == nullptr)
         return false;
     auto env = GetEnvForThread();
-    auto directory = GetParentPath(path);
-    auto directory_name = GetFilename(path);
     jstring j_directory = env->NewStringUTF(directory.c_str());
-    jstring j_directory_name = env->NewStringUTF(directory_name.c_str());
+    jstring j_directory_name = env->NewStringUTF(filename.c_str());
     return env->CallStaticBooleanMethod(native_library, create_dir, j_directory, j_directory_name);
 }
 
 int OpenContentUri(const std::string& filepath, AndroidOpenMode openmode) {
     if (open_content_uri == nullptr)
         return -1;
-    // Check whether filepath is startsWith content
-    if (filepath.rfind("content://", 0) != 0)
-        return -1;
+
     const char* mode = "";
     switch (openmode) {
     case AndroidOpenMode::READ:
@@ -150,12 +143,11 @@ std::vector<std::string> GetFilesName(const std::string& filepath) {
     return vector;
 }
 
-bool CopyFile(const std::string& source, const std::string& destination) {
+bool CopyFile(const std::string& source, const std::string& destination_path,
+              const std::string& destination_filename) {
     if (copy_file == nullptr)
         return false;
     auto env = GetEnvForThread();
-    auto destination_path = GetParentPath(destination);
-    auto destination_filename = GetFilename(destination);
     jstring j_source_path = env->NewStringUTF(source.c_str());
     jstring j_destination_path = env->NewStringUTF(destination_path.c_str());
     jstring j_destination_filename = env->NewStringUTF(destination_filename.c_str());
@@ -163,13 +155,12 @@ bool CopyFile(const std::string& source, const std::string& destination) {
                                         j_destination_path, j_destination_filename);
 }
 
-bool RenameFile(const std::string& source, const std::string& destination) {
+bool RenameFile(const std::string& source, const std::string& filename) {
     if (rename_file == nullptr)
         return false;
     auto env = GetEnvForThread();
-    auto android_dest_filename = GetFilename(destination);
     jstring j_source_path = env->NewStringUTF(source.c_str());
-    jstring j_destination_path = env->NewStringUTF(android_dest_filename.c_str());
+    jstring j_destination_path = env->NewStringUTF(filename.c_str());
     return env->CallStaticBooleanMethod(native_library, rename_file, j_source_path,
                                         j_destination_path);
 }

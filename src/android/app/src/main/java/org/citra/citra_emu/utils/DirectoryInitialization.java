@@ -98,7 +98,6 @@ public final class DirectoryInitialization {
         if (dataPath != null) {
             userPath = dataPath.toString();
             Log.debug("[DirectoryInitialization] User Dir: " + userPath);
-            NativeLibrary.SetUserDirectory(userPath);
             return true;
         }
         return false;

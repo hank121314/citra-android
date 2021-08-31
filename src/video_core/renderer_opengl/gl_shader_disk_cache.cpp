@@ -358,7 +358,7 @@ void ShaderDiskCache::SaveRaw(const ShaderDiskCacheRaw& entry) {
     }
 
     AppendTransferableFile();
-    if (!m_transferable_file || !m_transferable_file->IsOpen()) {
+    if (!m_transferable_file.has_value() || !m_transferable_file->IsOpen()) {
         m_transferable_file.reset();
         return;
     }
@@ -424,7 +424,7 @@ void ShaderDiskCache::SaveDumpToFile(u64 unique_identifier, GLuint program, bool
         return;
 
     AppendPrecompiledFile();
-    if (!m_precompiled_file || !m_precompiled_file->IsOpen()) {
+    if (!m_precompiled_file.has_value() || !m_precompiled_file->IsOpen()) {
         m_precompiled_file.reset();
         return;
     }
@@ -460,7 +460,7 @@ bool ShaderDiskCache::IsUsable() const {
 }
 
 void ShaderDiskCache::AppendTransferableFile() {
-    if (m_transferable_file)
+    if (m_transferable_file.has_value())
         return;
     if (!EnsureDirectories())
         return;
@@ -484,7 +484,7 @@ void ShaderDiskCache::AppendTransferableFile() {
 }
 
 void ShaderDiskCache::AppendPrecompiledFile() {
-    if (m_precompiled_file)
+    if (m_precompiled_file.has_value())
         return;
     if (!EnsureDirectories())
         return;

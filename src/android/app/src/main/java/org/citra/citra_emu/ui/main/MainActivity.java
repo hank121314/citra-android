@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import org.citra.citra_emu.CitraApplication;
 import org.citra.citra_emu.NativeLibrary;
 import org.citra.citra_emu.R;
 import org.citra.citra_emu.activities.EmulationActivity;
@@ -20,6 +21,7 @@ import org.citra.citra_emu.model.GameProvider;
 import org.citra.citra_emu.ui.platform.PlatformGamesFragment;
 import org.citra.citra_emu.utils.AddDirectoryHelper;
 import org.citra.citra_emu.utils.BillingManager;
+import org.citra.citra_emu.utils.FileUtil;
 import org.citra.citra_emu.utils.UserDirectoryHelper;
 import org.citra.citra_emu.utils.DirectoryInitialization;
 import org.citra.citra_emu.utils.FileBrowserHelper;
@@ -182,6 +184,7 @@ public final class MainActivity extends AppCompatActivity implements MainView {
                 if (resultCode == MainActivity.RESULT_OK && UserDirectoryHelper.setCitraDataDirectory(result.getDataString())) {
                     int takeFlags = (Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     getContentResolver().takePersistableUriPermission(Uri.parse(result.getDataString()), takeFlags);
+                    CitraApplication.documentsTree.setRoot(UserDirectoryHelper.getCitraDataDirectory());
 
                     DirectoryInitialization.resetCitraDirecotryState();
                     DirectoryInitialization.start(this);

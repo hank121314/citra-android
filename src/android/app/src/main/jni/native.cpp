@@ -339,7 +339,7 @@ jobjectArray Java_org_citra_citra_1emu_NativeLibrary_GetInstalledGamePaths(
                     bool executable{};
                     const Loader::ResultStatus result = loader->IsExecutable(executable);
                     if (Loader::ResultStatus::Success == result && executable) {
-                        games.emplace_back(FileUtil::ParseContentUri(path));
+                        games.emplace_back(path);
                     }
                 }
             }

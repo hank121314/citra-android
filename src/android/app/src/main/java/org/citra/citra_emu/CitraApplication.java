@@ -12,11 +12,14 @@ import android.net.Uri;
 import android.os.Build;
 
 import org.citra.citra_emu.model.GameDatabase;
+import org.citra.citra_emu.utils.DocumentsTree;
+import org.citra.citra_emu.utils.FileUtil;
 import org.citra.citra_emu.utils.UserDirectoryHelper;
 import org.citra.citra_emu.utils.DirectoryInitialization;
 
 public class CitraApplication extends Application {
     public static GameDatabase databaseHelper;
+    public static DocumentsTree documentsTree;
     private static CitraApplication application;
 
     private void createNotificationChannel() {
@@ -40,13 +43,11 @@ public class CitraApplication extends Application {
     public void onCreate() {
         super.onCreate();
         application = this;
+        documentsTree = new DocumentsTree();
 
         if (UserDirectoryHelper.hasWriteAccess()) {
-            Uri directory = UserDirectoryHelper.getCitraDataDirectory();
-            if (directory != null) {
-                NativeLibrary.SetUserDirectory(directory.toString());
-                DirectoryInitialization.start(getApplicationContext());
-            }
+            documentsTree.setRoot(UserDirectoryHelper.getCitraDataDirectory());
+            DirectoryInitialization.start(getApplicationContext());
         }
 
         createNotificationChannel();

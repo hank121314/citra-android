@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 
+import androidx.annotation.Nullable;
 import androidx.documentfile.provider.DocumentFile;
 
 import org.citra.citra_emu.CitraApplication;
@@ -28,17 +29,18 @@ public class FileUtil {
 
     /**
      * Create a file from directory with filename.
+     * @param context Application context
      * @param directory parent path for file.
      * @param filename file display name.
      * @return boolean
      */
-    public static boolean createFile(String directory, String filename) {
-        Context context = CitraApplication.getAppContext();
+    @Nullable
+    public static DocumentFile createFile(Context context, String directory, String filename) {
         try {
             Uri directoryUri = Uri.parse(directory);
             DocumentFile parent;
             parent = DocumentFile.fromTreeUri(context, directoryUri);
-            if (parent == null) return false;
+            if (parent == null) return null;
             filename = URLDecoder.decode(filename, DECODE_METHOD);
             int extensionPosition = filename.lastIndexOf('.');
             String extension = "";
@@ -49,48 +51,47 @@ public class FileUtil {
             if (extension.equals(".txt")) {
                 mimeType = TEXT_PLAIN;
             }
-            if (parent.findFile(filename) != null) return true;
-            DocumentFile createdFile = parent.createFile(mimeType, filename);
-            return createdFile != null;
+            DocumentFile isExist = parent.findFile(filename);
+            if (isExist != null) return isExist;
+            return parent.createFile(mimeType, filename);
         } catch (Exception e) {
             Log.error("[FileUtil]: Cannot create file, error: " + e.getMessage());
         }
-        return false;
+        return null;
     }
 
     /**
      * Create a directory from directory with filename.
+     * @param context Application context
      * @param directory parent path for directory.
      * @param directoryName directory display name.
      * @return boolean
      */
-    public static boolean createDir(String directory, String directoryName) {
-        Context context = CitraApplication.getAppContext();
+    @Nullable
+    public static DocumentFile createDir(Context context, String directory, String directoryName) {
         try {
             Uri directoryUri = Uri.parse(directory);
             DocumentFile parent;
             parent = DocumentFile.fromTreeUri(context, directoryUri);
-            if (parent == null) {
-                return false;
-            }
+            if (parent == null) return null;
             directoryName = URLDecoder.decode(directoryName, DECODE_METHOD);
-            if (parent.findFile(directoryName) != null) return true;
-            DocumentFile createdDirectory = parent.createDirectory(directoryName);
-            return createdDirectory != null;
+            DocumentFile isExist = parent.findFile(directoryName);
+            if (isExist != null) return isExist;
+            return parent.createDirectory(directoryName);
         } catch (Exception e) {
             Log.error("[FileUtil]: Cannot create file, error: " + e.getMessage());
         }
-        return false;
+        return null;
     }
 
     /**
      * Open content uri and return file descriptor to JNI.
+     * @param context Application context
      * @param path Native content uri path
      * @param openmode will be one of "r", "r", "rw", "wa", "rwa"
      * @return file descriptor
      */
-    public static int openContentUri(String path, String openmode) {
-        Context context = CitraApplication.getAppContext();
+    public static int openContentUri(Context context, String path, String openmode) {
         try {
             Uri uri = Uri.parse(path);
             ParcelFileDescriptor parcelFileDescriptor = context.getContentResolver().openFileDescriptor(uri, openmode);
@@ -109,16 +110,17 @@ public class FileUtil {
     /**
      * Reference:  https://stackoverflow.com/questions/42186820/documentfile-is-very-slow
      * This function will be faster than DoucmentFile.listFiles
+     * @param context Application context
      * @param uri Directory uri.
      * @return CheapDocument lists.
      */
-    public static CheapDocument[] listFiles(Uri uri) {
-        Context context = CitraApplication.getAppContext();
+    public static CheapDocument[] listFiles(Context context, Uri uri) {
         final ContentResolver resolver = context.getContentResolver();
         final String[] columns = new String[]{
                 DocumentsContract.Document.COLUMN_DOCUMENT_ID,
                 DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                DocumentsContract.Document.COLUMN_MIME_TYPE
+                DocumentsContract.Document.COLUMN_MIME_TYPE,
+                DocumentsContract.Document.COLUMN_SIZE,
         };
         Cursor c = null;
         final List<CheapDocument> results = new ArrayList<>();
@@ -135,8 +137,9 @@ public class FileUtil {
                 final String documentId = c.getString(0);
                 final String documentName = c.getString(1);
                 final String documentMimeType = c.getString(2);
+                final long documentSize = c.getLong(3);
                 final Uri documentUri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId);
-                CheapDocument document = new CheapDocument(documentName, documentMimeType, documentUri);
+                CheapDocument document = new CheapDocument(documentName, documentMimeType, documentUri, documentSize);
                 results.add(document);
             }
         } catch (Exception e) {
@@ -152,8 +155,7 @@ public class FileUtil {
      * @param path Native content uri path
      * @return bool
      */
-    public static boolean Exists(String path) {
-        Context context = CitraApplication.getAppContext();
+    public static boolean Exists(Context context, String path) {
         Cursor c = null;
         try {
             Uri mUri = Uri.parse(path);
@@ -173,8 +175,7 @@ public class FileUtil {
      * @param path content uri path
      * @return bool
      */
-    public static boolean isDirectory(String path) {
-        final Context context = CitraApplication.getAppContext();
+    public static boolean isDirectory(Context context, String path) {
         final ContentResolver resolver = context.getContentResolver();
         final String[] columns = new String[] {
                 DocumentsContract.Document.COLUMN_MIME_TYPE
@@ -200,8 +201,7 @@ public class FileUtil {
      * @param path content uri path
      * @return String display name
      */
-    public static String getFilename(String path) {
-        final Context context = CitraApplication.getAppContext();
+    public static String getFilename(Context context, String path) {
         final ContentResolver resolver = context.getContentResolver();
         final String[] columns = new String[] {
                 DocumentsContract.Document.COLUMN_DISPLAY_NAME
@@ -221,13 +221,21 @@ public class FileUtil {
         return filename;
     }
 
+    public static String[] getFilesName(Context context, String path) {
+        Uri uri = Uri.parse(path);
+        List<String> files = new ArrayList<>();
+        for (CheapDocument file: FileUtil.listFiles(context, uri)) {
+            files.add(file.getFilename());
+        }
+        return files.toArray(new String[0]);
+    }
+
     /**
      * Get file size from given path.
      * @param path content uri path
      * @return long file size
      */
-    public static long getFileSize(String path) {
-        final Context context = CitraApplication.getAppContext();
+    public static long getFileSize(Context context, String path) {
         final ContentResolver resolver = context.getContentResolver();
         final String[] columns = new String[] {
                 DocumentsContract.Document.COLUMN_SIZE
@@ -247,8 +255,7 @@ public class FileUtil {
         return size;
     }
 
-    public static boolean copyFile(String sourcePath, String destinationParentPath, String destinationFilename) {
-        Context context = CitraApplication.getAppContext();
+    public static boolean copyFile(Context context, String sourcePath, String destinationParentPath, String destinationFilename) {
         try {
             Uri sourceUri = Uri.parse(sourcePath);
             Uri destinationUri = Uri.parse(destinationParentPath);
@@ -274,8 +281,7 @@ public class FileUtil {
         return false;
     }
 
-    public static boolean renameFile(String path, String destinationFilename) {
-        Context context = CitraApplication.getAppContext();
+    public static boolean renameFile(Context context, String path, String destinationFilename) {
         try {
             Uri uri = Uri.parse(path);
             DocumentsContract.renameDocument(context.getContentResolver(), uri, destinationFilename);
@@ -286,8 +292,7 @@ public class FileUtil {
         return false;
     }
 
-    public static boolean deleteDocument(String path) {
-        Context context = CitraApplication.getAppContext();
+    public static boolean deleteDocument(Context context, String path) {
         try {
             Uri uri = Uri.parse(path);
             DocumentsContract.deleteDocument(context.getContentResolver(), uri);
