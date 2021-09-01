@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileUtil {
+    static final String PATH_TREE = "tree";
     static final String DECODE_METHOD = "UTF-8";
     static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
     static final String TEXT_PLAIN = "text/plain";
@@ -125,8 +126,13 @@ public class FileUtil {
         Cursor c = null;
         final List<CheapDocument> results = new ArrayList<>();
         try {
-            Uri mUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
-            final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, DocumentsContract.getDocumentId(mUri));
+            String docId;
+            if (isRootTreeUri(uri)) {
+                docId = DocumentsContract.getTreeDocumentId(uri);
+            } else {
+                docId = DocumentsContract.getDocumentId(uri);
+            }
+            final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, docId);
             c = resolver.query(childrenUri, columns, null, null, null);
             while(c.moveToNext()) {
                 final String documentId = c.getString(0);
@@ -325,6 +331,11 @@ public class FileUtil {
         }
 
         return bytes;
+    }
+
+    public static boolean isRootTreeUri(Uri uri) {
+        final List<String> paths = uri.getPathSegments();
+        return paths.size() == 2 && PATH_TREE.equals(paths.get(0));
     }
 
     public static void closeQuietly(AutoCloseable closeable) {
