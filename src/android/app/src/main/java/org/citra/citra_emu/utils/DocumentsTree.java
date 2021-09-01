@@ -51,13 +51,8 @@ public class DocumentsTree {
             if (node.children.get(filename) != null) return true;
             DocumentFile createdFile = FileUtil.createFile(context, mUri.toString(), name);
             if (createdFile == null) return false;
-            DocumentsNode document = new DocumentsNode();
-            document.uri = createdFile.getUri();
+            DocumentsNode document = new DocumentsNode(createdFile, false);
             document.parent = node;
-            document.name = createdFile.getName();
-            document.isDirectory = false;
-            document.loaded = true;
-            document.size = createdFile.length();
             node.children.put(document.name, document);
             return true;
         } catch (Exception e) {
@@ -77,12 +72,8 @@ public class DocumentsTree {
             if (node.children.get(filename) != null) return true;
             DocumentFile createdDirectory = FileUtil.createDir(context, mUri.toString(), name);
             if (createdDirectory == null) return false;
-            DocumentsNode document = new DocumentsNode();
-            document.uri = createdDirectory.getUri();
+            DocumentsNode document = new DocumentsNode(createdDirectory, true);
             document.parent = node;
-            document.name = createdDirectory.getName();
-            document.isDirectory = true;
-            document.loaded = true;
             node.children.put(document.name, document);
             return true;
         } catch (Exception e) {
@@ -122,7 +113,7 @@ public class DocumentsTree {
         if (node == null || node.isDirectory) {
             return 0;
         }
-        return node.size;
+        return FileUtil.getFileSize(context, node.uri.toString());
     }
 
     public boolean isDirectory(String filepath) {
@@ -162,7 +153,6 @@ public class DocumentsTree {
             input.close();
             output.flush();
             output.close();
-            document.size = sourceNode.size;
             destinationNode.children.put(document.name, document);
             return true;
         } catch (Exception e) {
@@ -232,13 +222,8 @@ public class DocumentsTree {
     private void structTree(DocumentsNode parent) {
         CheapDocument[] documents = FileUtil.listFiles(context, parent.uri);
         for (CheapDocument document: documents) {
-            DocumentsNode node = new DocumentsNode();
+            DocumentsNode node = new DocumentsNode(document);
             node.parent = parent;
-            node.name = document.getFilename();
-            node.uri = document.getUri();
-            node.isDirectory = document.isDirectory();
-            node.loaded = !node.isDirectory;
-            node.size = document.getSize();
             parent.children.put(node.name, node);
         }
         parent.loaded = true;
@@ -258,9 +243,22 @@ public class DocumentsTree {
         private final Map<String, DocumentsNode> children = new HashMap<>();
         private String name;
         private Uri uri;
-        private long size = 0;
         private boolean loaded = false;
         private boolean isDirectory = false;
+
+        private DocumentsNode() {}
+        private DocumentsNode(CheapDocument document) {
+            name = document.getFilename();
+            uri = document.getUri();
+            isDirectory = document.isDirectory();
+            loaded = !isDirectory;
+        }
+        private DocumentsNode(DocumentFile document, boolean isCreateDir) {
+            name = document.getName();
+            uri = document.getUri();
+            isDirectory = isCreateDir;
+            loaded = true;
+        }
 
         private void rename(String name) {
             if (parent == null) {
