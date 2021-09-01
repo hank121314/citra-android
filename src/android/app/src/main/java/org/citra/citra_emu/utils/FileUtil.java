@@ -125,13 +125,8 @@ public class FileUtil {
         Cursor c = null;
         final List<CheapDocument> results = new ArrayList<>();
         try {
-            String docId;
-            if (DocumentsContract.isDocumentUri(context, uri)) {
-                docId = DocumentsContract.getDocumentId(uri);
-            } else {
-                docId = DocumentsContract.getTreeDocumentId(uri);
-            }
-            final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, docId);
+            Uri mUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+            final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, DocumentsContract.getDocumentId(mUri));
             c = resolver.query(childrenUri, columns, null, null, null);
             while(c.moveToNext()) {
                 final String documentId = c.getString(0);
@@ -165,7 +160,7 @@ public class FileUtil {
         } catch (Exception e) {
             Log.info("[FileUtil] Cannot find file from given path, error: " + e.getMessage());
         } finally {
-            FileUtil.closeQuietly(c);
+            closeQuietly(c);
         }
         return false;
     }

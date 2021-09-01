@@ -8,14 +8,9 @@ package org.citra.citra_emu;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
-import android.provider.DocumentsContract;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.view.Surface;
@@ -31,15 +26,13 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 
 import org.citra.citra_emu.activities.EmulationActivity;
-import org.citra.citra_emu.model.CheapDocument;
+import org.citra.citra_emu.utils.DocumentsTree;
 import org.citra.citra_emu.utils.EmulationMenuSettings;
 import org.citra.citra_emu.utils.FileUtil;
 import org.citra.citra_emu.utils.Log;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 
 import static android.Manifest.permission.CAMERA;
@@ -78,73 +71,73 @@ public final class NativeLibrary {
     }
 
     public static boolean createFile(String directory, String filename) {
-        if (directory.startsWith("content://")) {
-            return FileUtil.createFile(CitraApplication.getAppContext(), directory, filename) != null;
+        if (DocumentsTree.isNativePath(directory)) {
+            return CitraApplication.documentsTree.createFile(directory, filename);
         }
-        return CitraApplication.documentsTree.createFile(directory, filename);
+        return FileUtil.createFile(CitraApplication.getAppContext(), directory, filename) != null;
     }
 
     public static boolean createDir(String directory, String directoryName) {
-        if (directory.startsWith("content://")) {
-            return FileUtil.createDir(CitraApplication.getAppContext(), directory, directoryName) != null;
+        if (DocumentsTree.isNativePath(directory)) {
+            return CitraApplication.documentsTree.createDir(directory, directoryName);
         }
-        return CitraApplication.documentsTree.createDir(directory, directoryName);
+        return FileUtil.createDir(CitraApplication.getAppContext(), directory, directoryName) != null;
     }
 
     public static int openContentUri(String path, String openmode) {
-        if (path.startsWith("content://")) {
-            return FileUtil.openContentUri(CitraApplication.getAppContext(), path, openmode);
+        if (DocumentsTree.isNativePath(path)) {
+            return CitraApplication.documentsTree.openContentUri(path, openmode);
         }
-        return CitraApplication.documentsTree.openContentUri(path, openmode);
+        return FileUtil.openContentUri(CitraApplication.getAppContext(), path, openmode);
     }
 
     public static String[] getFilesName(String path) {
-        if (path.startsWith("content://")) {
-            return FileUtil.getFilesName(CitraApplication.getAppContext(), path);
+        if (DocumentsTree.isNativePath(path)) {
+            return CitraApplication.documentsTree.getFilesName(path);
         }
-        return CitraApplication.documentsTree.getFilesName(path);
+        return FileUtil.getFilesName(CitraApplication.getAppContext(), path);
     }
 
     public static long getSize(String path) {
-        if (path.startsWith("content://")) {
-            return FileUtil.getFileSize(CitraApplication.getAppContext(), path);
+        if (DocumentsTree.isNativePath(path)) {
+            return CitraApplication.documentsTree.getFileSize(path);
         }
-        return CitraApplication.documentsTree.getFileSize(path);
+        return FileUtil.getFileSize(CitraApplication.getAppContext(), path);
     }
 
     public static boolean fileExists(String path) {
-        if (path.startsWith("content://")) {
-            return FileUtil.Exists(CitraApplication.getAppContext(), path);
+        if (DocumentsTree.isNativePath(path)) {
+            return CitraApplication.documentsTree.Exists(path);
         }
-        return CitraApplication.documentsTree.Exists(path);
+        return FileUtil.Exists(CitraApplication.getAppContext(), path);
     }
 
     public static boolean isDirectory(String path) {
-        if (path.startsWith("content://")) {
-            return FileUtil.isDirectory(CitraApplication.getAppContext(), path);
+        if (DocumentsTree.isNativePath(path)) {
+            return CitraApplication.documentsTree.isDirectory(path);
         }
-        return CitraApplication.documentsTree.isDirectory(path);
+        return FileUtil.isDirectory(CitraApplication.getAppContext(), path);
     }
 
     public static boolean copyFile(String sourcePath, String destinationParentPath, String destinationFilename) {
-        if (sourcePath.startsWith("content://") && destinationFilename.startsWith("content://")) {
-            return FileUtil.copyFile(CitraApplication.getAppContext(), sourcePath, destinationParentPath, destinationFilename);
+        if (DocumentsTree.isNativePath(sourcePath)&& DocumentsTree.isNativePath(destinationParentPath)) {
+            return CitraApplication.documentsTree.copyFile(sourcePath, destinationParentPath, destinationFilename);
         }
-        return CitraApplication.documentsTree.copyFile(sourcePath, destinationParentPath, destinationFilename);
+        return FileUtil.copyFile(CitraApplication.getAppContext(), sourcePath, destinationParentPath, destinationFilename);
     }
 
     public static boolean renameFile(String path, String destinationFilename) {
-        if (path.startsWith("content://")) {
-            return FileUtil.renameFile(CitraApplication.getAppContext(), path, destinationFilename);
+        if (DocumentsTree.isNativePath(path)) {
+            return CitraApplication.documentsTree.renameFile(path, destinationFilename);
         }
-        return CitraApplication.documentsTree.renameFile(path, destinationFilename);
+        return FileUtil.renameFile(CitraApplication.getAppContext(), path, destinationFilename);
     }
 
     public static boolean deleteDocument(String path) {
-        if (path.startsWith("content://")) {
-            return FileUtil.deleteDocument(CitraApplication.getAppContext(), path);
+        if (DocumentsTree.isNativePath(path)) {
+            return CitraApplication.documentsTree.deleteDocument(path);
         }
-        return CitraApplication.documentsTree.deleteDocument(path);
+        return FileUtil.deleteDocument(CitraApplication.getAppContext(), path);
     }
 
     /**

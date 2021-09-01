@@ -213,6 +213,10 @@ bool CreateDir(const std::string& path) {
         directory = GetParentPath(GetParentPath(path));
         filename = GetFilename(GetParentPath(path));
     }
+    // If directory path is empty, set it to root.
+    if (directory.empty()) {
+        directory = "/";
+    }
     if (!AndroidStorage::CreateDir(directory, filename)) {
         LOG_ERROR(Common_Filesystem, "mkdir failed on {}", path);
         return false;
