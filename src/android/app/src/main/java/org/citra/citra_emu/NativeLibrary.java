@@ -234,7 +234,6 @@ public final class NativeLibrary {
 
     public static native void CreateLogFile();
 
-
     public static native int DefaultCPUCore();
 
     /**

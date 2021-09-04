@@ -47,17 +47,17 @@ public final class FileBrowserHelper {
         }
         if (!files.isEmpty()) {
             List<String> filepaths = new ArrayList();
-                for (int i = 0; i < files.size(); i++) {
-                    DocumentFile file = files.get(i);
-                    String filename = file.getName();
-                    int extensionStart = filename.lastIndexOf('.');
-                    if (extensionStart > 0) {
-                        String fileExtension = filename.substring(extensionStart + 1);
-                        if (extension.contains(fileExtension)) {
-                            filepaths.add(file.getUri().toString());
-                        }
+            for (int i = 0; i < files.size(); i++) {
+                DocumentFile file = files.get(i);
+                String filename = file.getName();
+                int extensionStart = filename.lastIndexOf('.');
+                if (extensionStart > 0) {
+                    String fileExtension = filename.substring(extensionStart + 1);
+                    if (extension.contains(fileExtension)) {
+                        filepaths.add(file.getUri().toString());
                     }
                 }
+            }
             if (filepaths.isEmpty()) {
                 return null;
             }

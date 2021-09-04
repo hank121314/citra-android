@@ -321,7 +321,7 @@ void Java_org_citra_citra_1emu_NativeLibrary_SwapScreens(JNIEnv* env, [[maybe_un
 void Java_org_citra_citra_1emu_NativeLibrary_SetUserDirectory(JNIEnv* env,
                                                               [[maybe_unused]] jclass clazz,
                                                               jstring j_directory) {
-    FileUtil::SetUserPath(GetJString(env, j_directory));
+    FileUtil::SetCurrentDir(GetJString(env, j_directory));
 }
 
 jobjectArray Java_org_citra_citra_1emu_NativeLibrary_GetInstalledGamePaths(
