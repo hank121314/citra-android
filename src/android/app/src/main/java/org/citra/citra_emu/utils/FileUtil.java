@@ -121,7 +121,6 @@ public class FileUtil {
                 DocumentsContract.Document.COLUMN_DOCUMENT_ID,
                 DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                 DocumentsContract.Document.COLUMN_MIME_TYPE,
-                DocumentsContract.Document.COLUMN_SIZE,
         };
         Cursor c = null;
         final List<CheapDocument> results = new ArrayList<>();
@@ -138,9 +137,8 @@ public class FileUtil {
                 final String documentId = c.getString(0);
                 final String documentName = c.getString(1);
                 final String documentMimeType = c.getString(2);
-                final long documentSize = c.getLong(3);
                 final Uri documentUri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId);
-                CheapDocument document = new CheapDocument(documentName, documentMimeType, documentUri, documentSize);
+                CheapDocument document = new CheapDocument(documentName, documentMimeType, documentUri);
                 results.add(document);
             }
         } catch (Exception e) {

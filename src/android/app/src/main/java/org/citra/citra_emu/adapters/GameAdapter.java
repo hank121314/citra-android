@@ -91,10 +91,10 @@ public final class GameAdapter extends RecyclerView.Adapter<GameViewHolder> impl
 
                 String filepath = mCursor.getString(GameDatabase.GAME_COLUMN_PATH);
                 String filename;
-                if (filepath.startsWith("content://")) {
-                    filename = FileUtil.getFilename(CitraApplication.getAppContext(), filepath);
-                } else {
+                if (DocumentsTree.isNativePath(filepath)) {
                     filename = CitraApplication.documentsTree.getFilename(filepath);
+                } else {
+                    filename = FileUtil.getFilename(CitraApplication.getAppContext(), filepath);
                 }
                 holder.textFileName.setText(filename);
 

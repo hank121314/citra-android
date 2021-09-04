@@ -11,13 +11,11 @@ public class CheapDocument {
     private final String filename;
     private final Uri uri;
     private final String mimeType;
-    private final long size;
 
-    public CheapDocument(String filename, String mimeType, Uri uri, long size) {
+    public CheapDocument(String filename, String mimeType, Uri uri) {
         this.filename = filename;
         this.mimeType = mimeType;
         this.uri = uri;
-        this.size = size;
     }
 
     public String getFilename() {
@@ -26,10 +24,6 @@ public class CheapDocument {
 
     public Uri getUri() {
         return uri;
-    }
-
-    public long getSize() {
-        return size;
     }
 
     public boolean isDirectory() {
