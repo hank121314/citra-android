@@ -4,19 +4,14 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.UriPermission;
 import android.net.Uri;
-import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.provider.DocumentsContract;
 
 import androidx.annotation.Nullable;
 import androidx.documentfile.provider.DocumentFile;
 
 import org.citra.citra_emu.CitraApplication;
 import org.citra.citra_emu.R;
-
-import java.util.List;
 
 public class UserDirectoryHelper {
     public static final int REQUEST_CODE_WRITE_PERMISSION = 500;
@@ -37,7 +32,9 @@ public class UserDirectoryHelper {
             Uri uri = Uri.parse(directoryString);
             int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             context.getContentResolver().takePersistableUriPermission(uri, takeFlags);
-            return true;
+            DocumentFile root = DocumentFile.fromTreeUri(context, uri);
+            if (root != null && root.exists()) return true;
+            context.getContentResolver().releasePersistableUriPermission(uri, takeFlags);
         } catch (Exception e) {
             Log.error("[DataDirectoryHelper]: Cannot check citra data directory permission, error: " + e.getMessage());
         }
